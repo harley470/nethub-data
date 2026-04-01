@@ -1,0 +1,37 @@
+name: Update Nethub Data
+
+on:
+  schedule:
+    - cron: "0 13 * * *"
+    - cron: "0 * * * 6,0"
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run scraper
+        run: python scraper/scrape.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name  "nethub-bot"
+          git config user.email "bot@nethub.app"
+          git add data/nethub.json
+          git diff --staged --quiet || git commit -m "chore: auto-update netball data $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
